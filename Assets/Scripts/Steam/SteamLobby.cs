@@ -36,7 +36,7 @@ namespace SteamLobbyPanel
 
         void Start()
         {
-            networkManager = GetComponent<NetworkManager>();
+            networkManager = NetworkManager.singleton != null ? NetworkManager.singleton : GetComponent<NetworkManager>();
             if (!SteamManager.Initialized)
             {
                 Debug.LogError("Steam is not initialized. Make sure to run this game in the steam enviroment");
@@ -63,6 +63,9 @@ namespace SteamLobbyPanel
             }
 
             Debug.Log("Lobby successfully created. Lobby ID: " + callback.m_ulSteamIDLobby);
+
+            string mySteamIDStr = SteamUser.GetSteamID().ToString();
+            networkManager.networkAddress = mySteamIDStr;
             networkManager.StartHost();
 
             SteamMatchmaking.SetLobbyData(new CSteamID(callback.m_ulSteamIDLobby), HostAdressKey, SteamUser.GetSteamID().ToString());

@@ -43,7 +43,14 @@ namespace SteamLobbyPanel
             var lobby = new CSteamID(SteamLobby.Instance.lobbyID);
             int memberCount = SteamMatchmaking.GetNumLobbyMembers(lobby);
 
-            CSteamID hostID = new CSteamID(ulong.Parse(SteamMatchmaking.GetLobbyData(lobby, "HostAdress")));
+            string hostAddressStr = SteamMatchmaking.GetLobbyData(lobby, "HostAdress");
+            CSteamID hostID = CSteamID.Nil;
+            if (!string.IsNullOrEmpty(hostAddressStr))
+            {
+                ulong.TryParse(hostAddressStr, out ulong parsedHostID);
+                hostID = new CSteamID(parsedHostID);
+            }
+
             List<CSteamID> orderedMembers = new List<CSteamID>();
 
             if(memberCount == 0)
@@ -53,11 +60,16 @@ namespace SteamLobbyPanel
                 return;
             }
 
-            orderedMembers.Add(hostID);
+            // Fix: Only add the host if it's a valid ID
+            if (hostID != CSteamID.Nil)
+            {
+                orderedMembers.Add(hostID);
+            }
 
             for(int i = 0; i < memberCount; i++)
             {
                 CSteamID memberID = SteamMatchmaking.GetLobbyMemberByIndex(lobby, i);
+                // Fix: Only add members if they aren't the host (prevents duplicate host entries)
                 if(memberID != hostID)
                 {
                     orderedMembers.Add(memberID);
@@ -67,17 +79,35 @@ namespace SteamLobbyPanel
             int j = 0;
             foreach(var member in orderedMembers)
             {
-                TextMeshProUGUI txtMesh = playerListParent.GetChild(j).GetChild(0).GetComponent<TextMeshProUGUI>();
-                PlayerLobbyHandler playerLobbyHandler = playerListParent.GetChild(j).GetComponent<PlayerLobbyHandler>();
+                // Safety Check: If Mirror hasn't instantiated the visual UI slot yet, 
+                // break out or skip so it doesn't throw a "Transform child out of bounds" crash.
+                if (j >= playerListParent.childCount)
+                {
+                    Debug.LogWarning($"[LobbyUI] Steam has {orderedMembers.Count} members, but UI only has {playerListParent.childCount} slots ready. Waiting for Mirror to catch up...");
+                    break; 
+                }
+
+                Transform playerSlot = playerListParent.GetChild(j);
+                
+                // Safety Check: Make sure the child slot actually has a child UI text element
+                if (playerSlot.childCount == 0)
+                {
+                    Debug.LogError($"[LobbyUI] Player slot at index {j} is missing its TextMeshProUGUI child object!");
+                    continue;
+                }
+
+                TextMeshProUGUI txtMesh = playerSlot.GetChild(0).GetComponent<TextMeshProUGUI>();
+                PlayerLobbyHandler playerLobbyHandler = playerSlot.GetComponent<PlayerLobbyHandler>();
 
                 playerLobbyHandlers.Add(playerLobbyHandler);
                 playerNameTexts.Add(txtMesh);
 
                 string playerName = SteamFriends.GetFriendPersonaName(member);
-                playerNameTexts[j].text = playerName;
+                txtMesh.text = playerName;
                 j++;
             }
         }
+
 
         public void OnPlayButtonClicked()
         {
