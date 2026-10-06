@@ -9,7 +9,17 @@ using Unity.Services.Relay.Models;
 using TMPro;
 public class RelayManager : MonoBehaviour
 {
+    public static RelayManager Instance;
+    public TMP_InputField playerNameInput;
     public TMP_InputField joinCodeInput;
+    public string ChosenPlayerName {get; private set;}
+
+    private string currentLobbyCode;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
     {
@@ -20,6 +30,11 @@ public class RelayManager : MonoBehaviour
     public void OnClientConnected(ulong clientId)
     {
         Debug.Log("CLIENT CONNECTED! ID: " + clientId);
+
+        if(clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            LobbyUIManager.Instance.ShowLobby(currentLobbyCode);
+        }
     }
 
     public void OnClientDisconnected(ulong clientId)
@@ -28,6 +43,11 @@ public class RelayManager : MonoBehaviour
     }
     public void TestHost()
     {
+        ChosenPlayerName = playerNameInput.text.Trim();
+        if (string.IsNullOrEmpty(ChosenPlayerName))
+        {
+            ChosenPlayerName = "Player";
+        }
         _ = StartRelayHost();
     }
 
@@ -52,6 +72,8 @@ public class RelayManager : MonoBehaviour
 
         string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
 
+        currentLobbyCode = joinCode;
+
         Debug.Log("JOIN CODE: " + joinCode);
 
         UnityTransport transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
@@ -66,6 +88,11 @@ public class RelayManager : MonoBehaviour
     // Update is called once per frame
     public void TestJoin()
     {
+        ChosenPlayerName = playerNameInput.text.Trim();
+        if (string.IsNullOrEmpty(ChosenPlayerName))
+        {
+            ChosenPlayerName = "Player";
+        }
         _ = StartRelayClient();
     }
 
@@ -74,6 +101,8 @@ public class RelayManager : MonoBehaviour
         try
         {
             string joinCode = joinCodeInput.text.Trim();
+
+            currentLobbyCode = joinCode;
 
             if (string.IsNullOrEmpty(joinCode))
             {
