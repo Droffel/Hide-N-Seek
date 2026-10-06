@@ -9,49 +9,8 @@ using Unity.Services.Relay.Models;
 using TMPro;
 public class RelayManager : MonoBehaviour
 {
-    public static RelayManager Instance;
-    public TMP_InputField playerNameInput;
-    public TMP_InputField joinCodeInput;
-    public string ChosenPlayerName {get; private set;}
-
-    private string currentLobbyCode;
-
-    private void Awake()
-    {
-        Instance = this;
-    }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    private void Start()
-    {
-        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
-    }
-
-    public void OnClientConnected(ulong clientId)
-    {
-        Debug.Log("CLIENT CONNECTED! ID: " + clientId);
-
-        if(clientId == NetworkManager.Singleton.LocalClientId)
-        {
-            LobbyUIManager.Instance.ShowLobby(currentLobbyCode);
-        }
-    }
-
-    public void OnClientDisconnected(ulong clientId)
-    {
-        Debug.Log("CLIENT DISCONNECTED! ID: " + clientId);
-    }
-    public void TestHost()
-    {
-        ChosenPlayerName = playerNameInput.text.Trim();
-        if (string.IsNullOrEmpty(ChosenPlayerName))
-        {
-            ChosenPlayerName = "Player";
-        }
-        _ = StartRelayHost();
-    }
-
-    private async Task StartRelayHost()
+    public string CurrentLobbyCode{get; private set;}
+    public async Task StartRelayHost()
     {
         Debug.Log("Starting Relay host...");
 
@@ -72,7 +31,7 @@ public class RelayManager : MonoBehaviour
 
         string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
 
-        currentLobbyCode = joinCode;
+        CurrentLobbyCode = joinCode;
 
         Debug.Log("JOIN CODE: " + joinCode);
 
@@ -85,24 +44,11 @@ public class RelayManager : MonoBehaviour
         Debug.Log("Relay host started: " + success);
     }
 
-    // Update is called once per frame
-    public void TestJoin()
-    {
-        ChosenPlayerName = playerNameInput.text.Trim();
-        if (string.IsNullOrEmpty(ChosenPlayerName))
-        {
-            ChosenPlayerName = "Player";
-        }
-        _ = StartRelayClient();
-    }
-
-    private async Task StartRelayClient()
+    public async Task StartRelayClient(string joinCode)
     {
         try
         {
-            string joinCode = joinCodeInput.text.Trim();
-
-            currentLobbyCode = joinCode;
+            CurrentLobbyCode = joinCode;
 
             if (string.IsNullOrEmpty(joinCode))
             {

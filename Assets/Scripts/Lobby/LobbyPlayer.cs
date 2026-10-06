@@ -1,9 +1,11 @@
 using UnityEngine;
 using Unity.Netcode;
 using Unity.Collections;
+using System;
 
 public class LobbyPlayer : NetworkBehaviour
 {
+    public event Action LobbyDataChanged;
     public NetworkVariable<FixedString64Bytes> PlayerName =
         new NetworkVariable<FixedString64Bytes>(
             default,
@@ -11,15 +13,21 @@ public class LobbyPlayer : NetworkBehaviour
             NetworkVariableWritePermission.Server
         );
 
+    public NetworkVariable<bool> IsReady =
+        new NetworkVariable<bool>(
+            false,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
     public override void OnNetworkSpawn()
     {
         PlayerName.OnValueChanged += OnPlayerNameChanged;
-
-        LobbyUIManager.Instance?.RegisterPlayer(this);
+        IsReady.OnValueChanged += OnReadyChanged;
+        LobbyController.Instance?.RegisterPlayer(this);
 
         if (IsOwner)
         {
-            string chosenName = RelayManager.Instance.ChosenPlayerName;
+            string chosenName = LobbyController.Instance.ChosenPlayerName;
 
             if (IsServer)
             {
@@ -53,14 +61,41 @@ public class LobbyPlayer : NetworkBehaviour
         }
 
         PlayerName.Value = new FixedString64Bytes(newName);
-
-        LobbyUIManager.Instance?.RefreshPlayerList();
     }
 
     private void OnPlayerNameChanged(
         FixedString64Bytes oldName,
         FixedString64Bytes newName)
     {
-        LobbyUIManager.Instance?.RefreshPlayerList();
+        LobbyDataChanged?.Invoke();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        PlayerName.OnValueChanged -= OnPlayerNameChanged;
+        IsReady.OnValueChanged -= OnReadyChanged;
+
+        LobbyController.Instance?.UnregisterPlayer(this);
+    }
+
+    public void ToggleReady()
+    {
+        if (!IsOwner)
+        {
+            return;
+        }
+
+        SetReadyRpc(!IsReady.Value);
+    }
+
+    [Rpc(SendTo.Server)]
+    private void SetReadyRpc(bool ready)
+    {
+        IsReady.Value = ready;
+    }
+
+    private void OnReadyChanged(bool oldValue, bool newValue)
+    {
+        LobbyDataChanged?.Invoke();
     }
 }
