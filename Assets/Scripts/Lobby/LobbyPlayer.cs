@@ -23,7 +23,11 @@ public class LobbyPlayer : NetworkBehaviour
     {
         PlayerName.OnValueChanged += OnPlayerNameChanged;
         IsReady.OnValueChanged += OnReadyChanged;
-        LobbyController.Instance?.RegisterPlayer(this);
+        
+        if(LobbyController.Instance != null)
+        {
+            LobbyController.Instance?.RegisterPlayer(this);
+        }
 
         if (IsOwner)
         {
@@ -75,7 +79,10 @@ public class LobbyPlayer : NetworkBehaviour
         PlayerName.OnValueChanged -= OnPlayerNameChanged;
         IsReady.OnValueChanged -= OnReadyChanged;
 
-        LobbyController.Instance?.UnregisterPlayer(this);
+        if(LobbyController.Instance != null)
+        {
+            LobbyController.Instance?.UnregisterPlayer(this);
+        }
     }
 
     public void ToggleReady()

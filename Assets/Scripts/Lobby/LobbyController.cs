@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Services.Lobbies.Models;
 
 public class LobbyController : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class LobbyController : MonoBehaviour
 
     [SerializeField] private RelayManager relayManager;
     [SerializeField] private LobbyUIManager lobbyUI;
+    [SerializeField] private MatchController matchController;
     public string ChosenPlayerName {get; private set;}
 
     private void Awake()
@@ -96,6 +98,19 @@ public class LobbyController : MonoBehaviour
         {
             NetworkManager.Singleton.OnClientConnectedCallback -=OnClientConnected;
         }
+
+        foreach (LobbyPlayer player in players)
+        {
+            if(player != null)
+            {
+                player.LobbyDataChanged -= RefreshPlayerList;
+            }
+        }
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     private void OnClientConnected(ulong clientId)
@@ -136,5 +151,40 @@ public class LobbyController : MonoBehaviour
         }
 
         _ = relayManager.StartRelayClient(joinCode);
+    }
+
+    public void StartGame()
+    {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            Debug.LogWarning("Only the host can start the game");
+            return;
+        }
+
+        if (!AllPlayersReady())
+        {
+            Debug.LogWarning("Not all players are ready");
+            return;
+        }
+
+        matchController.StartMatch();
+    }
+
+    private bool AllPlayersReady()
+    {
+        if(players.Count == 0)
+        {
+            return false;
+        }
+
+        foreach(LobbyPlayer player in players)
+        {
+            if(player == null || !player.IsReady.Value)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
