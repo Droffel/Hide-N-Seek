@@ -2,6 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 using System.Collections.Generic;
 using Unity.Services.Lobbies.Models;
+using UnityEngine.SceneManagement;
 
 public class LobbyController : MonoBehaviour
 {
@@ -11,7 +12,7 @@ public class LobbyController : MonoBehaviour
 
     [SerializeField] private RelayManager relayManager;
     [SerializeField] private LobbyUIManager lobbyUI;
-    [SerializeField] private MatchController matchController;
+    [SerializeField] private string gameplaySceneName = "GameScene";
     public string ChosenPlayerName {get; private set;}
 
     private void Awake()
@@ -167,7 +168,10 @@ public class LobbyController : MonoBehaviour
             return;
         }
 
-        matchController.StartMatch();
+        NetworkManager.Singleton.SceneManager.LoadScene(
+            gameplaySceneName,
+            LoadSceneMode.Single
+        );
     }
 
     private bool AllPlayersReady()
