@@ -1,23 +1,80 @@
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.SceneManagement;
+using System;
+using System.Text.RegularExpressions;
 public class MatchController : NetworkBehaviour
 {
-    [SerializeField] private string gameplaySceneName = "GameScene";
+    private readonly NetworkVariable<MatchState> matchState =
+        new NetworkVariable<MatchState>(
+            MatchState.Starting,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
 
-    public void StartMatch()
+    public MatchState CurrentState => matchState.Value;
+
+    public event Action<MatchState> StateChanged;
+
+    public override void OnNetworkSpawn()
+    {
+        matchState.OnValueChanged += OnMatchStateChanged;
+
+        Debug.Log(
+            "MatchController spawned. Current state: "
+            + matchState.Value
+        );
+
+        if (IsServer)
+        {
+            BeginMatch();
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        matchState.OnValueChanged -= OnMatchStateChanged;
+    }
+
+    public void BeginMatch()
     {
         if (!IsServer)
         {
-            Debug.LogWarning("Only the servercan start the match.");
             return;
         }
 
-        Debug.Log("Starting match...");
+        SetMatchState(MatchState.Playing);
+    }
 
-        NetworkManager.SceneManager.LoadScene(
-            gameplaySceneName,
-            LoadSceneMode.Single
-        );
+    public void EndMatch()
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        SetMatchState(MatchState.Ended);
+    }
+
+    private void SetMatchState(MatchState newState)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        if(matchState.Value == newState)
+        {
+            return;
+        }
+
+        matchState.Value = newState;
+    }
+
+    private void OnMatchStateChanged(MatchState oldState, MatchState newState)
+    {
+        Debug.Log("Match state changed: " + oldState + " -> " + newState);
+
+        StateChanged?.Invoke(newState);
     }
 }
