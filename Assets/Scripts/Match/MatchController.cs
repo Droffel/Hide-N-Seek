@@ -5,6 +5,7 @@ using System;
 using System.Text.RegularExpressions;
 public class MatchController : NetworkBehaviour
 {
+    [SerializeField] private MatchTimer matchTimer;
     private readonly NetworkVariable<MatchState> matchState =
         new NetworkVariable<MatchState>(
             MatchState.Starting,
@@ -27,6 +28,7 @@ public class MatchController : NetworkBehaviour
 
         if (IsServer)
         {
+            matchTimer.TimeExpired += OnTimeExpired;
             BeginMatch();
         }
     }
@@ -34,6 +36,16 @@ public class MatchController : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         matchState.OnValueChanged -= OnMatchStateChanged;
+
+        if (IsServer)
+        {
+            matchTimer.TimeExpired -= OnTimeExpired;
+        }
+    }
+
+    private void OnTimeExpired()
+    {
+        EndMatch();
     }
 
     public void BeginMatch()
@@ -44,6 +56,7 @@ public class MatchController : NetworkBehaviour
         }
 
         SetMatchState(MatchState.Playing);
+        matchTimer.StartTimer();
     }
 
     public void EndMatch()
@@ -53,6 +66,7 @@ public class MatchController : NetworkBehaviour
             return;
         }
 
+        matchTimer.StopTimer();
         SetMatchState(MatchState.Ended);
     }
 

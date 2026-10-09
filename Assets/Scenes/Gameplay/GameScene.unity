@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 1118527439}
   - component: {fileID: 1118527437}
   - component: {fileID: 1118527438}
+  - component: {fileID: 1118527440}
   m_Layer: 0
   m_Name: MatchController
   m_TagString: Untagged
@@ -177,6 +178,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MatchController
   ShowTopMostFoldoutHeaderGroup: 1
+  matchTimer: {fileID: 0}
 --- !u!4 &1118527439
 Transform:
   m_ObjectHideFlags: 0
@@ -192,6 +194,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1118527440
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1118527436}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a302a36a9afac6bfa3242d50532ad09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MatchTimer
+  ShowTopMostFoldoutHeaderGroup: 1
+  matchDurationSeconds: 10
 --- !u!1 &1408617987
 GameObject:
   m_ObjectHideFlags: 0
