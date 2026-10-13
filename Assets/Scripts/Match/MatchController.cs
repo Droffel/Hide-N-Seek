@@ -13,6 +13,14 @@ public class MatchController : NetworkBehaviour
             NetworkVariableWritePermission.Server
         );
 
+    private readonly NetworkVariable<MatchResult> matchResult =
+        new NetworkVariable<MatchResult>(
+            MatchResult.None,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+    public MatchResult CurrentResult => matchResult.Value;
+
     public MatchState CurrentState => matchState.Value;
 
     public event Action<MatchState> StateChanged;
@@ -45,7 +53,7 @@ public class MatchController : NetworkBehaviour
 
     private void OnTimeExpired()
     {
-        EndMatch();
+        EndMatch(MatchResult.HidersWin);
     }
 
     public void BeginMatch()
@@ -59,15 +67,23 @@ public class MatchController : NetworkBehaviour
         matchTimer.StartTimer();
     }
 
-    public void EndMatch()
+    public void EndMatch(MatchResult result)
     {
         if (!IsServer)
         {
             return;
         }
 
+        if(matchState.Value == MatchState.Ended)
+        {
+            return;
+        }
+
         matchTimer.StopTimer();
+        matchResult.Value = result;
         SetMatchState(MatchState.Ended);
+
+        Debug.Log("Match ended: " + result);
     }
 
     private void SetMatchState(MatchState newState)
