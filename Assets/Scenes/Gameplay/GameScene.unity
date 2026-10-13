@@ -178,7 +178,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MatchController
   ShowTopMostFoldoutHeaderGroup: 1
-  matchTimer: {fileID: 0}
+  matchTimer: {fileID: 1118527440}
 --- !u!4 &1118527439
 Transform:
   m_ObjectHideFlags: 0
