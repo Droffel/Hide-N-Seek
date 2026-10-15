@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -7,6 +8,9 @@ public class PlayerTestSpawner : MonoBehaviour
 
     private NetworkManager networkManager;
 
+    private readonly Dictionary<ulong, NetworkObject> spawnedPlayers =
+        new Dictionary<ulong, NetworkObject>();
+
     private void Start()
     {
         networkManager = NetworkManager.Singleton;
@@ -14,44 +18,41 @@ public class PlayerTestSpawner : MonoBehaviour
         if (networkManager == null)
         {
             Debug.LogError(
-                "PlayerTestSpawner: No NetworkManager found in the scene."
+                "PlayerSpawner: No NetworkManager found in the scene."
             );
 
             enabled = false;
             return;
         }
 
-        networkManager.OnClientConnectedCallback += OnClientConnected;
-
-        // Handle clients that connected before this component initialized.
-        if (networkManager.IsServer)
+        if (!networkManager.IsServer)
         {
-            foreach (ulong clientId in networkManager.ConnectedClientsIds)
-            {
-                OnClientConnected(clientId);
-            }
+            return;
+        }
+
+        networkManager.OnClientConnectedCallback += OnClientConnected;
+        networkManager.OnClientDisconnectCallback += OnClientDisconnected;
+
+        foreach (ulong clientId in networkManager.ConnectedClientsIds)
+        {
+            SpawnPlayer(clientId);
         }
     }
 
     private void OnDestroy()
     {
-        if (networkManager != null)
-        {
-            networkManager.OnClientConnectedCallback -= OnClientConnected;
-        }
-    }
-
-    private void OnClientConnected(ulong clientId)
-    {
-        if (networkManager == null || !networkManager.IsServer)
+        if(networkManager == null)
         {
             return;
         }
 
-        if (networkManager.ConnectedClients.TryGetValue(
-                clientId,
-                out NetworkClient client)
-            && client.PlayerObject != null)
+        networkManager.OnClientConnectedCallback -= OnClientConnected;
+        networkManager.OnClientDisconnectCallback -= OnClientDisconnected;
+    }
+
+    private void OnClientConnected(ulong clientId)
+    {
+        if (!networkManager.IsServer)
         {
             return;
         }
@@ -59,8 +60,19 @@ public class PlayerTestSpawner : MonoBehaviour
         SpawnPlayer(clientId);
     }
 
+    private void OnClientDisconnected(ulong clientId)
+    {
+        spawnedPlayers.Remove(clientId);
+    }
+
     private void SpawnPlayer(ulong clientId)
     {
+
+        if (spawnedPlayers.ContainsKey(clientId))
+        {
+            return;
+        }
+        
         if (playerPrefab == null)
         {
             Debug.LogError(
@@ -82,8 +94,8 @@ public class PlayerTestSpawner : MonoBehaviour
             Quaternion.identity
         );
 
-        player.SpawnAsPlayerObject(clientId);
+        player.SpawnWithOwnership(clientId, true);
 
-        Debug.Log("Spawned player for client " + clientId);
+        spawnedPlayers.Add(clientId, player);
     }
 }

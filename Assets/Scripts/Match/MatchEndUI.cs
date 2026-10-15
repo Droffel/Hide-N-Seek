@@ -36,6 +36,8 @@ public class MatchEndUI : MonoBehaviour
     {
         panel.SetActive(true);
 
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         winnerText.text = result switch
         {
             MatchResult.HidersWin => "HIDERS WIN!",

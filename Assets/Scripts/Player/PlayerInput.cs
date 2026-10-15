@@ -9,9 +9,19 @@ public class PlayerInput : NetworkBehaviour, IPlayerInputSource
 
     
     public bool JumpPressed { get; private set; }
+    private bool inputEnabled = true;
 
+    public void SetInputEnabled(bool enabled)
+    {
+        inputEnabled = enabled;
+    }
     private void Update()
     {
+
+        if (!inputEnabled)
+        {
+            return;
+        }
         if (!IsOwner)
         {
             MoveInput = Vector2.zero;
