@@ -128,6 +128,8 @@ GameObject:
   - component: {fileID: 2072254010119963000}
   - component: {fileID: 2025226911253386201}
   - component: {fileID: 5668580717464888778}
+  - component: {fileID: 3671851906468209106}
+  - component: {fileID: 918202765687654073}
   m_Layer: 0
   m_Name: TestPlayer
   m_TagString: Untagged
@@ -245,7 +247,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1055133299
+  GlobalObjectIdHash: 3028174093
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -341,6 +343,35 @@ MonoBehaviour:
   cameraPivot: {fileID: 1462393323206585214}
   mouseSensitivity: 0.1
   maxLookAngle: 85
+--- !u!114 &3671851906468209106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1886606163548454766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36d0a00b15fb1c2f29b0365c67ba2818, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &918202765687654073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1886606163548454766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03ab165423025be3080bf652d3b2133a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombatController
+  ShowTopMostFoldoutHeaderGroup: 1
+  attackRange: 2.5
+  attackAngle: 100
+  attackCooldown: 1
 --- !u!1 &1994278461427839944
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,37 +2,43 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Netcode;
 
+[DefaultExecutionOrder(-100)]
 public class PlayerInput : NetworkBehaviour, IPlayerInputSource
 {
     public Vector2 MoveInput { get; private set; }
     public Vector2 LookInput { get; private set; }
-
-    
     public bool JumpPressed { get; private set; }
+    public bool AttackPressed { get; private set; }
     private bool inputEnabled = true;
 
     public void SetInputEnabled(bool enabled)
     {
         inputEnabled = enabled;
-    }
-    private void Update()
-    {
 
-        if (!inputEnabled)
-        {
-            return;
-        }
-        if (!IsOwner)
+        if(!enabled)
         {
             MoveInput = Vector2.zero;
             LookInput = Vector2.zero;
             JumpPressed = false;
+            AttackPressed = false;
+        }
+    }
+    private void Update()
+    {
+
+        if (!IsOwner || !inputEnabled)
+        {
+            MoveInput = Vector2.zero;
+            LookInput = Vector2.zero;
+            JumpPressed = false;
+            AttackPressed = false;
             return;
-        }   
+        }
 
         ReadMovementInput();
         ReadMouseInput();
         ReadJumpInput();
+        ReadAttackInput();
     }
 
     private void ReadMovementInput()
@@ -81,5 +87,11 @@ public class PlayerInput : NetworkBehaviour, IPlayerInputSource
         Keyboard keyboard = Keyboard.current;
 
         JumpPressed = keyboard != null && keyboard.spaceKey.wasPressedThisFrame;
+    }
+    private void ReadAttackInput()
+    {
+        Mouse mouse = Mouse.current;
+
+        AttackPressed = mouse != null && mouse.leftButton.wasPressedThisFrame;
     }
 }
