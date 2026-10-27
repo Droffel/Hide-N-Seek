@@ -93,7 +93,7 @@ public class LobbyController : MonoBehaviour
         }
     }
 
-    private void Onestroy()
+    private void OnDestroy()
     {
         if(NetworkManager.Singleton != null)
         {

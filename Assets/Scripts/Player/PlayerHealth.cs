@@ -1,6 +1,6 @@
-using NUnit.Framework;
 using Unity.Netcode;
 using UnityEngine;
+using System.Collections;
 
 public class PlayerHealth : NetworkBehaviour
 {
@@ -37,23 +37,36 @@ public class PlayerHealth : NetworkBehaviour
     }
 
     public bool TryKill()
+{
+    if (!IsServer)
     {
-        if(!IsServer)
-        {
-            return false;
-        }
-
-        if(!isAlive.Value)
-        {
-            return false;
-        }
-
-        isAlive.Value = false;
-
-        Debug.Log("Player " + OwnerClientId + "has been eliminated");
-
-        return true;
+        return false;
     }
+
+    if (!isAlive.Value)
+    {
+        return false;
+    }
+
+    isAlive.Value = false;
+
+    Debug.Log($"Object {NetworkObjectId} has been eliminated.");
+
+    // Despawn this network object after a short delay.
+    StartCoroutine(DespawnAfterDelay());
+
+    return true;
+}
+
+private System.Collections.IEnumerator DespawnAfterDelay()
+{
+    yield return new WaitForSeconds(1f);
+
+    if (IsServer && NetworkObject != null && NetworkObject.IsSpawned)
+    {
+        NetworkObject.Despawn(true);
+    }
+}
 
     private void OnAliveChanged(bool oldValue, bool newValue)
     {

@@ -5,20 +5,11 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : NetworkBehaviour
 {
-    [Header("Movement")]
-    [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private float acceleration = 15f;
-    [SerializeField] private float deceleration = 20f;
-    [SerializeField] private float airControl = 0.5f;
+    [Header("Player Configuration")]
+    [SerializeField] private PlayerStats playerStats;
 
-    [Header("Jumping")]
-    [SerializeField] private float jumpHeight = 1.5f;
-    [SerializeField] private float gravity = -20f;
-
-    [Header("Mouse Look")]
+    [Header("Camera")]
     [SerializeField] private Transform cameraPivot;
-    [SerializeField] private float mouseSensitivity = 0.1f;
-    [SerializeField] private float maxLookAngle = 85f;
 
     private CharacterController characterController;
     private IPlayerInputSource inputSource;
@@ -33,6 +24,14 @@ public class PlayerMovement : NetworkBehaviour
     {
         characterController = GetComponent<CharacterController>();
         inputSource = GetComponent<IPlayerInputSource>();
+
+        if (playerStats == null)
+        {
+            Debug.LogError(
+                "PlayerMovement: PlayerStats is not assigned.",
+                this
+            );
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -60,8 +59,8 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (!IsOwner)
             return;
-
-        if (inputSource == null || cameraPivot == null)
+        
+        if(playerStats == null || inputSource == null || cameraPivot == null )
             return;
 
         HandleCursorInput();
@@ -85,14 +84,14 @@ public class PlayerMovement : NetworkBehaviour
 
         float control = characterController.isGrounded
             ? 1f
-            : airControl;
+            : playerStats.AirControl;
 
         float rate = hasMovementInput
-            ? acceleration
-            : deceleration;
+            ? playerStats.Acceleration
+            : playerStats.Deceleration;
 
         Vector3 targetVelocity =
-            moveDirection * moveSpeed * control;
+            moveDirection * playerStats.MoveSpeed * control;
 
         horizontalVelocity = Vector3.MoveTowards(
             horizontalVelocity,
@@ -110,12 +109,12 @@ public class PlayerMovement : NetworkBehaviour
             if (inputSource.JumpPressed)
             {
                 verticalVelocity = Mathf.Sqrt(
-                    jumpHeight * -2f * gravity
+                    playerStats.JumpHeight * -2f * playerStats.Gravity
                 );
             }
         }
 
-        verticalVelocity += gravity * Time.deltaTime;
+        verticalVelocity += playerStats.Gravity * Time.deltaTime;
 
         Vector3 velocity =
             horizontalVelocity +
@@ -131,8 +130,8 @@ public class PlayerMovement : NetworkBehaviour
 
         Vector2 lookInput = inputSource.LookInput;
 
-        float mouseX = lookInput.x * mouseSensitivity;
-        float mouseY = lookInput.y * mouseSensitivity;
+        float mouseX = lookInput.x * playerStats.MouseSensitivity;
+        float mouseY = lookInput.y * playerStats.MouseSensitivity;
 
         transform.Rotate(Vector3.up * mouseX);
 
@@ -140,8 +139,8 @@ public class PlayerMovement : NetworkBehaviour
 
         cameraPitch = Mathf.Clamp(
             cameraPitch,
-            -maxLookAngle,
-            maxLookAngle
+            -playerStats.MaxLookAngle,
+            playerStats.MaxLookAngle
         );
 
         cameraPivot.localRotation =

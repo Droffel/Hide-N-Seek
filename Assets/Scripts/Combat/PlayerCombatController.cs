@@ -1,7 +1,5 @@
 using Unity.Netcode;
-using Unity.Services.Lobbies.Models;
 using UnityEngine;
-using UnityEngine.Analytics;
 
 public class PlayerCombatController : NetworkBehaviour
 {
@@ -52,6 +50,14 @@ public class PlayerCombatController : NetworkBehaviour
             return;
         }
 
+        PlayerRole attackerRole = GetComponent<PlayerRole>();
+
+        if (attackerRole == null || !attackerRole.IsSeeker)
+        {
+            Debug.Log("Attack rejected: only seekers can attack.");
+            return;
+        }
+
         if(rpcParams.Receive.SenderClientId != OwnerClientId)
         {
             return;
@@ -83,68 +89,99 @@ public class PlayerCombatController : NetworkBehaviour
             );
         }
     }
-    private PlayerHealth FindTarget()
+    
+private PlayerHealth FindTarget()
+{
+    PlayerHealth closestTarget = null;
+    float closestDistance = attackRange;
+
+    Vector3 attackDirection = transform.forward;
+    attackDirection.y = 0f;
+    attackDirection.Normalize();
+
+    PlayerHealth[] targets =
+        FindObjectsByType<PlayerHealth>(FindObjectsSortMode.None);
+
+    Debug.Log(
+        $"[Combat] Attacker {OwnerClientId}: " +
+        $"Found {targets.Length} PlayerHealth objects."
+    );
+
+    foreach (PlayerHealth target in targets)
     {
-        NetworkManager networkManager = NetworkManager.Singleton;
-
-        if(networkManager == null)
+        if (target == null)
         {
-            return null;
-        }
-        PlayerHealth closestTarget = null;
-        float closestDistance = attackRange;
-
-        Vector3 attackDirection = transform.forward;
-        attackDirection.y = 0f;
-
-        attackDirection.Normalize();
-
-        foreach(NetworkClient client in networkManager.ConnectedClientsList)
-        {
-            if(client.PlayerObject == null)
-            {
-                continue;
-            }
-            if(client.ClientId == OwnerClientId)
-            {
-                continue;
-            }
-
-            PlayerHealth target =
-                client.PlayerObject.GetComponent<PlayerHealth>();
-
-            if(target == null || !target.IsAlive)
-            {
-                continue;
-            }
-            Vector3 direction =
-                target.transform.position - transform.position;
-            
-            direction.y = 0f;
-
-            float distance = direction.magnitude;
-
-            if(distance > closestDistance || distance <= 0.001f)
-            {
-                continue;
-            }
-
-            direction.Normalize();
-
-            float angle = Vector3.Angle(
-                attackDirection,
-                direction
-            );
-
-            if(angle>attackAngle * 0.5f)
-            {
-                continue;
-            }
-
-            closestDistance = distance;
-            closestTarget = target;
+            continue;
         }
 
-        return closestTarget;
+        Debug.Log(
+            $"[Combat] Checking target. " +
+            $"Spawned: {target.IsSpawned}, " +
+            $"Alive: {target.IsAlive}, " +
+            $"Position: {target.transform.position}"
+        );
+
+        if (!target.IsSpawned)
+        {
+            Debug.Log("[Combat] Target rejected: not network-spawned.");
+            continue;
+        }
+
+        if (target == playerHealth)
+        {
+            Debug.Log("[Combat] Target rejected: this is the attacker.");
+            continue;
+        }
+
+        if (!target.IsAlive)
+        {
+            Debug.Log("[Combat] Target rejected: already eliminated.");
+            continue;
+        }
+
+        Vector3 direction =
+            target.transform.position - transform.position;
+
+        direction.y = 0f;
+
+        float distance = direction.magnitude;
+
+        Debug.Log($"[Combat] Target distance: {distance:F2}");
+
+        if (distance > attackRange || distance <= 0.001f)
+        {
+            Debug.Log("[Combat] Target rejected: outside attack range.");
+            continue;
+        }
+
+        direction.Normalize();
+
+        float angle = Vector3.Angle(attackDirection, direction);
+
+        Debug.Log($"[Combat] Target angle: {angle:F2}");
+
+        if (angle > attackAngle * 0.5f)
+        {
+            Debug.Log("[Combat] Target rejected: outside attack angle.");
+            continue;
+        }
+
+        closestDistance = distance;
+        closestTarget = target;
     }
+
+    if (closestTarget == null)
+    {
+        Debug.Log("[Combat] No valid target found.");
+    }
+    else
+    {
+        Debug.Log(
+            $"[Combat] Target found: Client {closestTarget.OwnerClientId}"
+        );
+    }
+
+    return closestTarget;
+}
+
 }
