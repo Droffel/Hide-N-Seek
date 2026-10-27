@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using System.Collections;
+using System.Text.RegularExpressions;
 
 public class PlayerHealth : NetworkBehaviour
 {
@@ -16,7 +17,8 @@ public class PlayerHealth : NetworkBehaviour
     private PlayerInput playerInput;
     private PlayerMovement playerMovement;
     private CharacterController characterController;
-
+    
+    [SerializeField] private GameObject playerVisuals;
     private void Awake()
     {
         playerInput = GetComponent<PlayerInput>();
@@ -37,36 +39,30 @@ public class PlayerHealth : NetworkBehaviour
     }
 
     public bool TryKill()
-{
-    if (!IsServer)
     {
-        return false;
+        if (!IsServer)
+        {
+            return false;
+        }
+
+        if (!isAlive.Value)
+        {
+            return false;
+        }
+
+        isAlive.Value = false;
+
+        MatchController matchController = FindFirstObjectByType<MatchController>();
+
+        if(matchController != null)
+        {
+            matchController.CheckForSeekerWin();
+        }
+
+        Debug.Log($"Object {NetworkObjectId} has been eliminated.");
+
+        return true;
     }
-
-    if (!isAlive.Value)
-    {
-        return false;
-    }
-
-    isAlive.Value = false;
-
-    Debug.Log($"Object {NetworkObjectId} has been eliminated.");
-
-    // Despawn this network object after a short delay.
-    StartCoroutine(DespawnAfterDelay());
-
-    return true;
-}
-
-private System.Collections.IEnumerator DespawnAfterDelay()
-{
-    yield return new WaitForSeconds(1f);
-
-    if (IsServer && NetworkObject != null && NetworkObject.IsSpawned)
-    {
-        NetworkObject.Despawn(true);
-    }
-}
 
     private void OnAliveChanged(bool oldValue, bool newValue)
     {
@@ -89,10 +85,15 @@ private System.Collections.IEnumerator DespawnAfterDelay()
             playerMovement.enabled = alive;
         }
 
+        if(playerVisuals != null)
+        {
+            playerVisuals.SetActive(alive);
+        }
+
         if(!alive && IsOwner)
         {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            //Cursor.lockState = CursorLockMode.None;
+            //Cursor.visible = true;
         }
     }
 }

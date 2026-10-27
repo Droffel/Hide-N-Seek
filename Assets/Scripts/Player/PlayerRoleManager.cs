@@ -4,48 +4,64 @@ using UnityEngine;
 
 public class PlayerRoleManager : NetworkBehaviour
 {
-    public void StartRound()
-    {
-        // Let the server make the assignment.
-        if (!IsServer)
-            return;
-        
-        AssignRoles();
-    }
+    private bool rolesAssigned = false;
   
     public void AssignRolesAfterSpawn()
     {
         if (!IsServer)
+        {
             return;
+        }
 
-        AssignRoles();
+        if (rolesAssigned)
+        {
+            return;
+        }
+
+        List<PlayerRole> players = GetSpawnedPlayers();
+
+        int connectedPlayers = NetworkManager.Singleton.ConnectedClientsIds.Count;
+
+        if (players.Count < connectedPlayers)
+        {
+            Debug.Log(
+                $"Waiting for players before assigning roles. " +
+                $"Spawned: {players.Count}/{connectedPlayers}"
+            );
+
+            return;
+        }
+
+        AssignRoles(players);
     }
-    private void AssignRoles()
-    {
-        if (!IsServer)
-            return;
 
+    private List<PlayerRole> GetSpawnedPlayers()
+    {
         List<PlayerRole> players = new List<PlayerRole>();
 
         foreach (PlayerRole role in FindObjectsByType<PlayerRole>(FindObjectsSortMode.None))
         {
             if (role.IsSpawned)
+            {
                 players.Add(role);
+            }
         }
-
-        if (players.Count == 0)
-        {
-            Debug.LogWarning("Cannot assign roles: no players found.");
+        return players;
+    }
+    private void AssignRoles(List<PlayerRole> players)
+    {
+        if (!IsServer)
             return;
-        }
 
-        foreach (PlayerRole player in players)
+        foreach(PlayerRole player in players)
+        {
             player.SetRole(PlayerRoleType.Hider);
+        }
 
         int seekerIndex = Random.Range(0, players.Count);
+
         players[seekerIndex].SetRole(PlayerRoleType.Seeker);
 
-        Debug.Log($"Roles assigned. Total players: {players.Count}. " +
-              $"Seeker: client {players[seekerIndex].OwnerClientId}.");
+        rolesAssigned = true;
     }
 }

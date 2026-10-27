@@ -71,6 +71,34 @@ public class MatchController : NetworkBehaviour
         matchTimer.StartTimer();
     }
 
+    public void CheckForSeekerWin()
+    {
+        if (!IsServer)
+            return;
+
+        PlayerRole[] players =
+            FindObjectsByType<PlayerRole>(
+                FindObjectsSortMode.None
+            );
+
+        foreach (PlayerRole role in players)
+        {
+            if (role.CurrentRole != PlayerRoleType.Hider)
+                continue;
+
+            PlayerHealth health =
+                role.GetComponent<PlayerHealth>();
+
+            if (health != null && health.IsAlive)
+            {
+                // At least one Hider is still alive.
+                return;
+            }
+        }
+
+        // No living Hiders remain.
+        EndMatch(MatchResult.SeekerWin);
+    }
     public void EndMatch(MatchResult result)
     {
         if (!IsServer)

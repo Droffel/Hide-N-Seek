@@ -1,6 +1,7 @@
 using System.Collections;
 using TMPro;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerRoleUI : NetworkBehaviour
@@ -19,20 +20,35 @@ public class PlayerRoleUI : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         if (!IsOwner)
-            return;
-
-        if (roleText == null)
         {
-            roleText = RoleTextAnchor.Text;
+            return;
         }
 
-        if(playerRole == null || roleText == null)
+        StartCoroutine(InitializeRoleUI());
+    }
+
+    private IEnumerator InitializeRoleUI()
+    {
+        while (RoleTextAnchor.Text == null)
         {
-            Debug.LogError("PlayerRoleUI: missing PlayerRole or role text.", this);
-            return;
+            yield return null;
+        }
+
+        roleText = RoleTextAnchor.Text;
+
+        if(playerRole == null)
+        {
+        
+            Debug.LogError(
+                "PlayerRoleUI: missing PlayerRole.",
+                this
+            );
+
+            yield break;
         }
 
         playerRole.OnRoleChanged += UpdateRoleText;
+
         UpdateRoleText(playerRole.CurrentRole);
     }
 
