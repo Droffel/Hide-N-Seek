@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerTestSpawner : MonoBehaviour
 {
     [SerializeField] private NetworkObject playerPrefab;
+    
 
     private NetworkManager networkManager;
 
@@ -67,11 +68,16 @@ public class PlayerTestSpawner : MonoBehaviour
 
     private void SpawnPlayer(ulong clientId)
     {
-
+        Debug.Log($"SpawnPlayer({clientId}); existing player object: " +
+          $"{networkManager.ConnectedClients[clientId].PlayerObject?.name ?? "none"}");
         if (spawnedPlayers.ContainsKey(clientId))
         {
             return;
         }
+
+        var existing = networkManager.ConnectedClients[clientId].PlayerObject;
+        if (existing != null)
+            existing.Despawn(true);
         
         if (playerPrefab == null)
         {
@@ -94,8 +100,9 @@ public class PlayerTestSpawner : MonoBehaviour
             Quaternion.identity
         );
 
-        player.SpawnWithOwnership(clientId, true);
+        player.SpawnAsPlayerObject(clientId);
 
         spawnedPlayers.Add(clientId, player);
+
     }
 }
