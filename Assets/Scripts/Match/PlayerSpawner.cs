@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerSpawner : MonoBehaviour
 {
     [SerializeField] private NetworkObject playerPrefab;
+    [SerializeField] private PlayerRoleManager roleManager;
 
     private NetworkManager networkManager;
 
@@ -97,5 +98,8 @@ public class PlayerSpawner : MonoBehaviour
         player.SpawnWithOwnership(clientId, true);
 
         spawnedPlayers.Add(clientId, player);
+
+        if (roleManager != null)
+            roleManager.AssignRolesAfterSpawn();
     }
 }

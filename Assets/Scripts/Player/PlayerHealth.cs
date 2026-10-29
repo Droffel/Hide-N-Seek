@@ -1,6 +1,7 @@
-using NUnit.Framework;
 using Unity.Netcode;
 using UnityEngine;
+using System.Collections;
+using System.Text.RegularExpressions;
 
 public class PlayerHealth : NetworkBehaviour
 {
@@ -16,7 +17,8 @@ public class PlayerHealth : NetworkBehaviour
     private PlayerInput playerInput;
     private PlayerMovement playerMovement;
     private CharacterController characterController;
-
+    
+    [SerializeField] private GameObject playerVisuals;
     private void Awake()
     {
         playerInput = GetComponent<PlayerInput>();
@@ -38,19 +40,26 @@ public class PlayerHealth : NetworkBehaviour
 
     public bool TryKill()
     {
-        if(!IsServer)
+        if (!IsServer)
         {
             return false;
         }
 
-        if(!isAlive.Value)
+        if (!isAlive.Value)
         {
             return false;
         }
 
         isAlive.Value = false;
 
-        Debug.Log("Player " + OwnerClientId + "has been eliminated");
+        MatchController matchController = FindFirstObjectByType<MatchController>();
+
+        if(matchController != null)
+        {
+            matchController.CheckForSeekerWin();
+        }
+
+        Debug.Log($"Object {NetworkObjectId} has been eliminated.");
 
         return true;
     }
@@ -76,10 +85,15 @@ public class PlayerHealth : NetworkBehaviour
             playerMovement.enabled = alive;
         }
 
+        if(playerVisuals != null)
+        {
+            playerVisuals.SetActive(alive);
+        }
+
         if(!alive && IsOwner)
         {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            //Cursor.lockState = CursorLockMode.None;
+            //Cursor.visible = true;
         }
     }
 }
