@@ -16,9 +16,9 @@ public class PlayerMovement : NetworkBehaviour
 
     private Vector3 horizontalVelocity;
     private float verticalVelocity;
-    private float cameraPitch;
 
     private bool cursorLocked = true;
+    public bool IsCursorLocked => cursorLocked;
 
     private void Awake()
     {
@@ -131,20 +131,9 @@ public class PlayerMovement : NetworkBehaviour
         Vector2 lookInput = inputSource.LookInput;
 
         float mouseX = lookInput.x * playerStats.MouseSensitivity;
-        float mouseY = lookInput.y * playerStats.MouseSensitivity;
 
         transform.Rotate(Vector3.up * mouseX);
 
-        cameraPitch -= mouseY;
-
-        cameraPitch = Mathf.Clamp(
-            cameraPitch,
-            -playerStats.MaxLookAngle,
-            playerStats.MaxLookAngle
-        );
-
-        cameraPivot.localRotation =
-            Quaternion.Euler(cameraPitch, 0f, 0f);
     }
 
     private void HandleCursorInput()
