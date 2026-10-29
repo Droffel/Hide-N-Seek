@@ -1,12 +1,16 @@
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerCombatController : NetworkBehaviour
 {
     [Header("Attack Settings")]
     [SerializeField] private float attackRange = 2.5f;
-    [SerializeField] private float attackAngle = 100f;
+    [SerializeField] private float attackAngle = 30f;
     [SerializeField] private float attackCooldown = 1f;
+
+    [Header("Aim Settings")]
+    [SerializeField] private Transform aimTransform;
 
     private IPlayerInputSource inputSource;
     private PlayerHealth playerHealth;
@@ -95,9 +99,8 @@ private PlayerHealth FindTarget()
     PlayerHealth closestTarget = null;
     float closestDistance = attackRange;
 
-    Vector3 attackDirection = transform.forward;
-    attackDirection.y = 0f;
-    attackDirection.Normalize();
+    Vector3 attackDirection = aimTransform != null ? aimTransform.forward.normalized : transform.forward.normalized;
+  
 
     PlayerHealth[] targets =
         FindObjectsByType<PlayerHealth>(FindObjectsSortMode.None);
@@ -109,7 +112,7 @@ private PlayerHealth FindTarget()
 
     foreach (PlayerHealth target in targets)
     {
-        if (target == null)
+        if (target == null || !target.IsSpawned)
         {
             continue;
         }
@@ -139,10 +142,11 @@ private PlayerHealth FindTarget()
             continue;
         }
 
-        Vector3 direction =
-            target.transform.position - transform.position;
+        Vector3 targetPosition = target.transform.position + Vector3.up * 0.2f;
 
-        direction.y = 0f;
+        Vector3 direction =
+            targetPosition - aimTransform.position;
+
 
         float distance = direction.magnitude;
 
@@ -156,7 +160,7 @@ private PlayerHealth FindTarget()
 
         direction.Normalize();
 
-        float angle = Vector3.Angle(attackDirection, direction);
+        float angle = Vector3.Angle(attackDirection, direction.normalized);
 
         Debug.Log($"[Combat] Target angle: {angle:F2}");
 
@@ -165,10 +169,14 @@ private PlayerHealth FindTarget()
             Debug.Log("[Combat] Target rejected: outside attack angle.");
             continue;
         }
-
-        closestDistance = distance;
-        closestTarget = target;
+        if(distance < closestDistance)
+        {
+            closestDistance = distance;
+            closestTarget = target;
+        }
     }
+
+    
 
     if (closestTarget == null)
     {

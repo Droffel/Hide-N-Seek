@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 918202765687654073}
   - component: {fileID: 2478181273128391693}
   - component: {fileID: 6120653674917656599}
+  - component: {fileID: 8927879891308940440}
   m_Layer: 0
   m_Name: TestPlayer
   m_TagString: Untagged
@@ -357,8 +358,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombatController
   ShowTopMostFoldoutHeaderGroup: 1
   attackRange: 5
-  attackAngle: 100
+  attackAngle: 30
   attackCooldown: 1
+  aimTransform: {fileID: 1462393323206585214}
 --- !u!114 &2478181273128391693
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -373,7 +375,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRoleUI
   ShowTopMostFoldoutHeaderGroup: 1
   roleText: {fileID: 0}
-  displayDuration: 10
+  displayDuration: 5
 --- !u!114 &6120653674917656599
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -387,6 +389,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRole
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &8927879891308940440
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1886606163548454766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87eb49dcd3307bbc9a88ccf1c0eab416, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAim
+  ShowTopMostFoldoutHeaderGroup: 1
+  playerStats: {fileID: 11400000, guid: ac5be839021fa0284b1f8132ef8da11d, type: 2}
+  cameraPivot: {fileID: 1462393323206585214}
+  syncInterval: 0.05
 --- !u!1 &1994278461427839944
 GameObject:
   m_ObjectHideFlags: 0
