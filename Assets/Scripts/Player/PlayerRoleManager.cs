@@ -60,7 +60,7 @@ public class PlayerRoleManager : NetworkBehaviour
 
         int seekerIndex = Random.Range(0, players.Count);
 
-        players[seekerIndex].SetRole(PlayerRoleType.Seeker);
+        players[seekerIndex].SetRole(PlayerRoleType.Hider);
 
         rolesAssigned = true;
     }

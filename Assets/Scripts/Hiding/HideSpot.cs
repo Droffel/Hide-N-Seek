@@ -1,40 +1,15 @@
 using UnityEngine;
 
-public class HideSpot : MonoBehaviour
+public static class HideSpot
 {
-
-    [SerializeField] private bool canHide = true;
-
-
-    private bool isOccupied = false;
-
-    // checks if item is hideable
-    public bool CanHide()
+    public static bool IsHideable(Transform target, Transform possessableRoot)
     {
-        return canHide;
-    }
-
-    // check if another player is in there
-    public bool IsOccupied()
-    {
-        return isOccupied;
-    }
-
-    // if player can hide or not (no if another player is in it)
-    public bool TryOccupy()
-    {
-        if (!canHide || isOccupied)
+        if (target == null || possessableRoot == null)
         {
             return false;
         }
 
-        isOccupied = true;
-        return true;
-    }
-
-    // when player leaves item
-    public void Release()
-    {
-        isOccupied = false;
+        return target == possessableRoot ||
+               target.IsChildOf(possessableRoot);
     }
 }
