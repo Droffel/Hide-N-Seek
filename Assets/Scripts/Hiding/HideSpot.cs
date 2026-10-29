@@ -2,15 +2,39 @@ using UnityEngine;
 
 public class HideSpot : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+
+    [SerializeField] private bool canHide = true;
+
+
+    private bool isOccupied = false;
+
+    // checks if item is hideable
+    public bool CanHide()
     {
-        
+        return canHide;
     }
 
-    // Update is called once per frame
-    void Update()
+    // check if another player is in there
+    public bool IsOccupied()
     {
-        
+        return isOccupied;
+    }
+
+    // if player can hide or not (no if another player is in it)
+    public bool TryOccupy()
+    {
+        if (!canHide || isOccupied)
+        {
+            return false;
+        }
+
+        isOccupied = true;
+        return true;
+    }
+
+    // when player leaves item
+    public void Release()
+    {
+        isOccupied = false;
     }
 }
