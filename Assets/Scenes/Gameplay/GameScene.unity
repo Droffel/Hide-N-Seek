@@ -32016,6 +32016,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawner
   playerPrefab: {fileID: 4824426922352557805, guid: ce72552c406fafa6fbf3dfc85f474c1a, type: 3}
   roleManager: {fileID: 1858102048}
+  spawnPoints: []
+  clearanceRadius: 0.5
+  obstructionMask:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1001 &560964598
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -15,9 +15,12 @@ public class PlayerCombatController : NetworkBehaviour
     private IPlayerInputSource inputSource;
     private PlayerHealth playerHealth;
     private float nextAttackTime;
+    private SeekerPreparationController preparationController;
 
     private void Awake()
     {
+        preparationController = GetComponent<SeekerPreparationController>();
+
         inputSource = GetComponent<IPlayerInputSource>();
         playerHealth = GetComponent<PlayerHealth>();
 
@@ -59,6 +62,10 @@ public class PlayerCombatController : NetworkBehaviour
         if (attackerRole == null || !attackerRole.IsSeeker)
         {
             Debug.Log("Attack rejected: only seekers can attack.");
+            return;
+        }
+        if (preparationController != null && preparationController.IsPreparing)
+        {
             return;
         }
 

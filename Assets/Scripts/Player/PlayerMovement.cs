@@ -20,8 +20,12 @@ public class PlayerMovement : NetworkBehaviour
     private bool cursorLocked = true;
     public bool IsCursorLocked => cursorLocked;
 
+    private SeekerPreparationController preparationController;
+
     private void Awake()
     {
+        preparationController = GetComponent<SeekerPreparationController>();
+
         characterController = GetComponent<CharacterController>();
         inputSource = GetComponent<IPlayerInputSource>();
 
@@ -58,14 +62,31 @@ public class PlayerMovement : NetworkBehaviour
     private void Update()
     {
         if (!IsOwner)
+        {
             return;
+        }
+            
         
         if(playerStats == null || inputSource == null || cameraPivot == null )
+        {
             return;
+        }
 
         HandleCursorInput();
+
+        PlayerRole playerRole = GetComponent<PlayerRole>();
+
+        if (playerRole != null &&
+            playerRole.IsSeeker &&
+            preparationController != null &&
+            preparationController.IsPreparing)
+        {
+            return;
+        }
+
         HandleMouseLook();
         HandleMovement();
+
     }
 
     private void HandleMovement()

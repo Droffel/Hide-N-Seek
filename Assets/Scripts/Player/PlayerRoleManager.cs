@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.Services.Lobbies.Models;
 using UnityEngine;
 
 public class PlayerRoleManager : NetworkBehaviour
@@ -49,19 +50,40 @@ public class PlayerRoleManager : NetworkBehaviour
         return players;
     }
     private void AssignRoles(List<PlayerRole> players)
+{
+    if (!IsServer || players.Count == 0)
+        return;
+
+    foreach (PlayerRole player in players)
     {
-        if (!IsServer)
-            return;
-
-        foreach(PlayerRole player in players)
-        {
-            player.SetRole(PlayerRoleType.Hider);
-        }
-
-        int seekerIndex = Random.Range(0, players.Count);
-
-        players[seekerIndex].SetRole(PlayerRoleType.Hider);
-
-        rolesAssigned = true;
+        player.SetRole(PlayerRoleType.Hider);
     }
+
+    int seekerIndex = Random.Range(0, players.Count);
+
+    PlayerRole seeker = players[seekerIndex];
+    seeker.SetRole(PlayerRoleType.Seeker);
+
+    SeekerPreparationController preparation =
+        seeker.GetComponent<SeekerPreparationController>();
+
+    if (preparation == null)
+    {
+        Debug.LogError(
+            $"PlayerRoleManager: Seeker {seeker.OwnerClientId} " +
+            "is missing SeekerPreparationController."
+        );
+
+        return;
+    }
+
+    preparation.BeginPreparation();
+
+    rolesAssigned = true;
+
+    Debug.Log(
+        $"Seeker assigned to client {seeker.OwnerClientId}. " +
+        "30-second preparation started."
+    );
+}
 }
