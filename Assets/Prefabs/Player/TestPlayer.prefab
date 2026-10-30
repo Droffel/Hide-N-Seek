@@ -21,6 +21,7 @@ GameObject:
   - component: {fileID: 6120653674917656599}
   - component: {fileID: 8927879891308940440}
   - component: {fileID: 6414721887998616004}
+  - component: {fileID: -6112649195418006516}
   m_Layer: 0
   m_Name: TestPlayer
   m_TagString: Untagged
@@ -310,6 +311,20 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   hiderVisual: {fileID: 6565175778579503364}
   seekerVisual: {fileID: 2775183469910752948}
+--- !u!114 &-6112649195418006516
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1886606163548454766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a83d4e4605798c4f08b34ea86c3d9247, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHideController
+  ShowTopMostFoldoutHeaderGroup: 1
+  interactionRange: 4
 --- !u!1 &1994278461427839944
 GameObject:
   m_ObjectHideFlags: 0
