@@ -1,16 +1,15 @@
 using UnityEngine;
 
-public class HideSpot : MonoBehaviour
+public static class HideSpot
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public static bool IsHideable(Transform target, Transform possessableRoot)
     {
-        
-    }
+        if (target == null || possessableRoot == null)
+        {
+            return false;
+        }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        return target == possessableRoot ||
+               target.IsChildOf(possessableRoot);
     }
 }
