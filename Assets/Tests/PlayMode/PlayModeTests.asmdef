@@ -4,7 +4,11 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "Unity.Netcode.Runtime"
+        "Unity.Netcode.Runtime",
+        "Unity.Collections",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "HideNReap"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

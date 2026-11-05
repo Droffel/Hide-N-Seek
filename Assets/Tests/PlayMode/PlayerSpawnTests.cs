@@ -90,32 +90,28 @@ public class PlayerSpawnTests
 
         ulong clientId = NetworkManager.Singleton.LocalClientId;
 
-        NetworkObject[] networkObjects =
-            Object.FindObjectsByType<NetworkObject>(
-                FindObjectsSortMode.None
-            );
+        NetworkObject player =
+            NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
 
-        bool playerFound = false;
-
-        foreach (NetworkObject networkObject in networkObjects)
-        {
-            if (networkObject.IsSpawned &&
-                networkObject.OwnerClientId == clientId)
-            {
-                playerFound = true;
-                break;
-            }
-        }
-
-        Assert.IsTrue(
-            playerFound,
-            "No spawned NetworkObject owned by the connected client was found."
+        Assert.IsNotNull(
+        player,
+        "No player object was spawned for the connected client."
         );
 
-        Debug.Log("TEST PASSED: Connected client has a spawned NetworkObject.");
+        Debug.Log("TEST PASSED: Connected client has a spawned player object.");
 
-        NetworkManager.Singleton.Shutdown();
+        
 
         yield return null;
     }
+    [UnityTearDown]
+    public IEnumerator TearDown()
+    {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+            Object.Destroy(NetworkManager.Singleton.gameObject);
+        }
+    yield return null;   // give Unity a frame to finish shutting down and destroying
+}
 }
