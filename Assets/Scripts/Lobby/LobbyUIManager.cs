@@ -38,6 +38,10 @@ public class LobbyUIManager : MonoBehaviour
         List<LobbyPlayerDisplayData> players,
         System.Action onReadyClicked)
     {
+        if ( playerListContainer == null)
+        {
+            return;
+        }
         foreach(Transform child in playerListContainer)
         {
             Destroy(child.gameObject);

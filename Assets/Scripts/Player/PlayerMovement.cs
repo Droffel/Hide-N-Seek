@@ -22,6 +22,9 @@ public class PlayerMovement : NetworkBehaviour
 
     private SeekerPreparationController preparationController;
 
+    // Lets tests drive this component with simulated input.
+    public void SetInputSource(IPlayerInputSource source) => inputSource = source;
+
     private void Awake()
     {
         preparationController = GetComponent<SeekerPreparationController>();

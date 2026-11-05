@@ -31,7 +31,9 @@ public class LobbyPlayer : NetworkBehaviour
 
         if (IsOwner)
         {
-            string chosenName = LobbyController.Instance.ChosenPlayerName;
+            string chosenName = LobbyController.Instance != null
+            ? LobbyController.Instance.ChosenPlayerName
+            : null;
 
             if (IsServer)
             {

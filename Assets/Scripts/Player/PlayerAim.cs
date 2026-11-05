@@ -1,6 +1,5 @@
 using System;
 using Unity.Netcode;
-using Unity.Services.Lobbies.Models;
 using UnityEngine;
 
 public class PlayerAim : NetworkBehaviour
@@ -18,6 +17,9 @@ public class PlayerAim : NetworkBehaviour
 
     private float cameraPitch;
     private float nextSyncTime;
+
+    // Lets tests drive this component with simulated input.
+    public void SetInputSource(IPlayerInputSource source) => inputSource = source;
 
     private readonly NetworkVariable<float> replicatedPitch = new NetworkVariable<float>(
         0f,

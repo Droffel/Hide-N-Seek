@@ -1,10 +1,11 @@
 using Unity.Netcode;
 using UnityEngine;
-using System.Collections;
-using System.Text.RegularExpressions;
 
 public class PlayerHealth : NetworkBehaviour
 {
+    [SerializeField] private PlayerStats playerStats;
+    [SerializeField] private GameObject playerVisuals;
+
     private readonly NetworkVariable<bool> isAlive =
         new NetworkVariable<bool>(
             true,
@@ -12,13 +13,21 @@ public class PlayerHealth : NetworkBehaviour
             NetworkVariableWritePermission.Server
         );
 
+    private readonly NetworkVariable<float> currentHealth =
+        new NetworkVariable<float>(
+            0f,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
     public bool IsAlive => isAlive.Value;
+    public float CurrentHealth => currentHealth.Value;
+    public float MaxHealth => playerStats != null ? playerStats.MaxHealth : 100f;
 
     private PlayerInput playerInput;
     private PlayerMovement playerMovement;
     private CharacterController characterController;
-    
-    [SerializeField] private GameObject playerVisuals;
+
     private void Awake()
     {
         playerInput = GetComponent<PlayerInput>();
@@ -30,12 +39,44 @@ public class PlayerHealth : NetworkBehaviour
     {
         isAlive.OnValueChanged += OnAliveChanged;
 
+        if (IsServer)
+        {
+            currentHealth.Value = MaxHealth;
+        }
+
         ApplyAliveState(isAlive.Value);
     }
 
     public override void OnNetworkDespawn()
     {
         isAlive.OnValueChanged -= OnAliveChanged;
+    }
+
+    /// <summary>
+    /// Server only. Returns true if the damage was applied.
+    /// Zero, negative (would heal) and NaN damage are rejected.
+    /// Damage larger than the remaining health clamps health to 0 and kills.
+    /// </summary>
+    public bool TryApplyDamage(float amount)
+    {
+        if (!IsServer || !isAlive.Value)
+        {
+            return false;
+        }
+
+        if (float.IsNaN(amount) || amount <= 0f)
+        {
+            return false;
+        }
+
+        currentHealth.Value = Mathf.Max(0f, currentHealth.Value - amount);
+
+        if (currentHealth.Value <= 0f)
+        {
+            TryKill();
+        }
+
+        return true;
     }
 
     public bool TryKill()
@@ -50,11 +91,12 @@ public class PlayerHealth : NetworkBehaviour
             return false;
         }
 
+        currentHealth.Value = 0f;
         isAlive.Value = false;
 
         MatchController matchController = FindFirstObjectByType<MatchController>();
 
-        if(matchController != null)
+        if (matchController != null)
         {
             matchController.CheckForSeekerWin();
         }
@@ -71,26 +113,27 @@ public class PlayerHealth : NetworkBehaviour
 
     private void ApplyAliveState(bool alive)
     {
-        if(playerInput != null)
+        if (playerInput != null)
         {
             playerInput.SetInputEnabled(alive);
         }
 
-        if(characterController != null)
+        if (characterController != null)
         {
             characterController.enabled = alive;
         }
-        if(playerMovement != null)
+
+        if (playerMovement != null)
         {
             playerMovement.enabled = alive;
         }
 
-        if(playerVisuals != null)
+        if (playerVisuals != null)
         {
             playerVisuals.SetActive(alive);
         }
 
-        if(!alive && IsOwner)
+        if (!alive && IsOwner)
         {
             //Cursor.lockState = CursorLockMode.None;
             //Cursor.visible = true;

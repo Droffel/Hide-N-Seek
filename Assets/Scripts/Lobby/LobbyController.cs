@@ -1,8 +1,9 @@
 using Unity.Netcode;
 using UnityEngine;
 using System.Collections.Generic;
-using Unity.Services.Lobbies.Models;
 using UnityEngine.SceneManagement;
+using System;
+using System.Text.RegularExpressions;
 
 public class LobbyController : MonoBehaviour
 {
@@ -49,6 +50,10 @@ public class LobbyController : MonoBehaviour
 
     private void RefreshPlayerList()
     {
+        if (lobbyUI == null)
+        {
+            return;
+        }
         List<LobbyPlayerDisplayData> displayPlayers =
             new List<LobbyPlayerDisplayData>();
 
@@ -122,7 +127,7 @@ public class LobbyController : MonoBehaviour
         }
     }
 
-    public void HostGame()
+    public void CapturePlayerName()
     {
         ChosenPlayerName = lobbyUI.GetPlayerName();
 
@@ -130,18 +135,17 @@ public class LobbyController : MonoBehaviour
         {
             ChosenPlayerName = "Player";
         }
-
-        _ = relayManager.StartRelayHost();
     }
+
+    public void HostGame()
+    {
+        CapturePlayerName();
+        _ = relayManager.StartRelayHost();
+    }  
 
     public void JoinGame()
     {
-        ChosenPlayerName = lobbyUI.GetPlayerName();
-
-        if (string.IsNullOrEmpty(ChosenPlayerName))
-        {
-            ChosenPlayerName = "Player";
-        }
+        CapturePlayerName();
 
         string joinCode = lobbyUI.GetJoinCode();
 
