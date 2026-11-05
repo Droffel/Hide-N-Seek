@@ -33,7 +33,7 @@ public class InteractionPromptAnchor : MonoBehaviour
     {
         if (Text != null)
         {
-            Text.text = "✕ Cannot hide here";
+            Text.text = "x Cannot hide here";
         }
     }
 

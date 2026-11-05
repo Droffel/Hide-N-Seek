@@ -8,14 +8,23 @@ public class PlayerHideController : NetworkBehaviour
     [Header("Object Detection")]
     [SerializeField] private float interactionRange = 4f;
 
+    [Header("Exit Settings")]
+    [SerializeField] private float exitHeightOffset = 0.6f;
+
+    [Header("Player Visuals")]
+    [SerializeField] private GameObject playerVisualRoot;
+
     private Transform possessableRoot;
     private Camera playerCamera;
     private TMP_Text promptText;
 
     private PlayerRole playerRole;
     private PlayerMovement playerMovement;
+    private CharacterController characterController;
+    private PlayerHideCamera hideCamera;
 
-    private Vector3 originalPosition;
+    private Collider hiddenObjectCollider;
+    private Renderer[] playerRenderers;
 
     private NetworkVariable<bool> isHiding =
         new NetworkVariable<bool>(
@@ -32,8 +41,18 @@ public class PlayerHideController : NetworkBehaviour
     {
         playerRole = GetComponent<PlayerRole>();
         playerMovement = GetComponent<PlayerMovement>();
+        characterController = GetComponent<CharacterController>();
+        hideCamera = GetComponent<PlayerHideCamera>();
+
+        if (playerVisualRoot != null)
+        {
+            playerRenderers =
+                playerVisualRoot.GetComponentsInChildren<Renderer>(true);
+        }
 
         isHiding.OnValueChanged += HandleHidingChanged;
+
+        UpdatePlayerVisibility(isHiding.Value);
 
         if (IsOwner)
         {
@@ -50,7 +69,22 @@ public class PlayerHideController : NetworkBehaviour
 
     private void HandleHidingChanged(bool oldValue, bool newValue)
     {
+        Debug.Log("HIDING STATE CHANGED: " + newValue, this);
         OnHidingChanged?.Invoke(newValue);
+    }
+
+    private void UpdatePlayerVisibility(bool hiding)
+    {
+        if (playerRenderers == null)
+            return;
+
+        foreach (Renderer renderer in playerRenderers)
+        {
+            if (renderer != null)
+            {
+                renderer.enabled = !hiding;
+            }
+        }
     }
 
     private void FindReferences()
@@ -60,9 +94,7 @@ public class PlayerHideController : NetworkBehaviour
             playerCamera = GetComponentInChildren<Camera>(true);
 
             if (playerCamera == null)
-            {
                 playerCamera = Camera.main;
-            }
         }
 
         if (possessableRoot == null)
@@ -71,9 +103,7 @@ public class PlayerHideController : NetworkBehaviour
                 FindAnyObjectByType<PossessableRoot>();
 
             if (root != null)
-            {
                 possessableRoot = root.transform;
-            }
         }
 
         if (promptText == null)
@@ -85,9 +115,7 @@ public class PlayerHideController : NetworkBehaviour
     private void Update()
     {
         if (!IsOwner)
-        {
             return;
-        }
 
         FindReferences();
 
@@ -126,9 +154,9 @@ public class PlayerHideController : NetworkBehaviour
             playerCamera.ScreenPointToRay(mousePosition);
 
         if (Physics.Raycast(
-                ray,
-                out RaycastHit hit,
-                interactionRange))
+            ray,
+            out RaycastHit hit,
+            interactionRange))
         {
             bool isPossessable =
                 HideSpot.IsHideable(hit.transform, possessableRoot);
@@ -140,7 +168,10 @@ public class PlayerHideController : NetworkBehaviour
                 if (Keyboard.current != null &&
                     Keyboard.current.eKey.wasPressedThisFrame)
                 {
-                    RequestHideServerRpc(ray.origin, ray.direction);
+                    RequestHideServerRpc(
+                        ray.origin,
+                        ray.direction
+                    );
                 }
             }
             else
@@ -157,116 +188,107 @@ public class PlayerHideController : NetworkBehaviour
     private void ClearPrompt()
     {
         if (promptText != null)
-        {
             promptText.text = "";
-        }
     }
 
     private void ShowLeavePrompt()
     {
         if (promptText != null)
-        {
             promptText.text = "Press E to leave";
-        }
     }
 
     [ServerRpc]
-    private void RequestHideServerRpc(Vector3 rayOrigin, Vector3 rayDirection)
+    private void RequestHideServerRpc(
+        Vector3 rayOrigin,
+        Vector3 rayDirection)
     {
         if (isHiding.Value)
-        {
             return;
-        }
 
         PlayerRole role = GetComponent<PlayerRole>();
 
-        if (role == null || role.CurrentRole != PlayerRoleType.Hider)
-        {
+        if (role == null ||
+            role.CurrentRole != PlayerRoleType.Hider)
             return;
-        }
 
         PossessableRoot root =
             FindAnyObjectByType<PossessableRoot>();
 
         if (root == null)
-        {
             return;
-        }
 
-        if (Vector3.Distance(rayOrigin, transform.position) > 3f)
-        {
+        if (Vector3.Distance(rayOrigin, transform.position) > 5f)
             return;
-        }
 
-        if (Physics.Raycast(
-                rayOrigin,
-                rayDirection.normalized,
-                out RaycastHit hit,
-                interactionRange))
-        {
-            if (!HideSpot.IsHideable(hit.transform, root.transform))
-            {
-                return;
-            }
+        if (!Physics.Raycast(
+            rayOrigin,
+            rayDirection.normalized,
+            out RaycastHit hit,
+            interactionRange))
+            return;
 
-            originalPosition = transform.position;
+        if (!HideSpot.IsHideable(hit.transform, root.transform))
+            return;
 
-            isHiding.Value = true;
+        hiddenObjectCollider = hit.collider;
 
-            MoveOwnerClientRpc(hit.transform.position, true);
-        }
+        isHiding.Value = true;
+
+        MoveOwnerClientRpc(hit.transform.position, true);
     }
 
     [ServerRpc]
     private void RequestLeaveServerRpc()
     {
         if (!isHiding.Value)
-        {
             return;
-        }
 
         PlayerRole role = GetComponent<PlayerRole>();
 
-        if (role == null || role.CurrentRole != PlayerRoleType.Hider)
-        {
+        if (role == null ||
+            role.CurrentRole != PlayerRoleType.Hider)
             return;
+
+        Vector3 exitPosition = transform.position;
+
+        if (hiddenObjectCollider != null)
+        {
+            Bounds bounds = hiddenObjectCollider.bounds;
+
+            exitPosition = new Vector3(
+                bounds.center.x,
+                bounds.max.y + exitHeightOffset,
+                bounds.center.z
+            );
         }
 
         isHiding.Value = false;
 
-        MoveOwnerClientRpc(originalPosition, false);
+        hiddenObjectCollider = null;
+
+        MoveOwnerClientRpc(exitPosition, false);
     }
 
     [ClientRpc]
-    private void MoveOwnerClientRpc(Vector3 targetPosition, bool hiding)
+    private void MoveOwnerClientRpc(
+        Vector3 targetPosition,
+        bool hiding)
     {
         if (!IsOwner)
-        {
             return;
-        }
 
-        if (playerMovement == null)
-        {
-            playerMovement = GetComponent<PlayerMovement>();
-        }
+        if (characterController != null)
+            characterController.enabled = false;
 
-        if (hiding)
-        {
-            if (playerMovement != null)
-            {
-                playerMovement.enabled = false;
-            }
+        transform.position = targetPosition;
 
-            transform.position = targetPosition;
-        }
-        else
-        {
-            transform.position = targetPosition;
+        if (characterController != null)
+            characterController.enabled = true;
 
-            if (playerMovement != null)
-            {
-                playerMovement.enabled = true;
-            }
-        }
+        if (playerMovement != null)
+            playerMovement.enabled = !hiding;
+
+        if (hideCamera != null)
+            hideCamera.SetHiding(hiding);
     }
 }
